@@ -117,6 +117,4 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-
-
 export default App;

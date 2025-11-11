@@ -1,7 +1,6 @@
 // Service Worker untuk caching dan push notification
 self.addEventListener('install', (event) => {
   console.log('Service Worker installing...');
-  // Cache aplikasi saat install
   event.waitUntil(
     caches.open('v1').then((cache) => {
       return cache.addAll([
@@ -16,6 +15,22 @@ self.addEventListener('install', (event) => {
   );
 });
 
+// Menangani aktifasi service worker, membersihkan cache lama
+self.addEventListener('activate', (event) => {
+  const cacheWhitelist = ['v1'];
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (!cacheWhitelist.includes(cacheName)) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+});
+
 // Fetch event untuk mengambil file dari cache saat offline
 self.addEventListener('fetch', (event) => {
   event.respondWith(
@@ -25,6 +40,7 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
+// Push Notification
 self.addEventListener('push', function (event) {
   const data = event.data.json();
   const options = {
