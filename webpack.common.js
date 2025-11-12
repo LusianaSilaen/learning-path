@@ -49,7 +49,11 @@ module.exports = {
       filename: "index.html",
     }),
     new CopyWebpackPlugin({
-      patterns: [{ from: "src/public", to: path.resolve(__dirname, "dist") }],
+      patterns: [
+        // Menyalin manifest.json dari src ke dist (root folder)
+        { from: "src/manifest.json", to: path.resolve(__dirname, "dist") },
+        { from: "src/public", to: path.resolve(__dirname, "dist") }, // Menyalin semua file lain dari src/public ke dist
+      ],
     }),
   ],
 };

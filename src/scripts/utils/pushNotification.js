@@ -15,6 +15,6 @@ export function subscribeToPushNotifications() {
           console.error('Gagal subscribe:', err);
         });
     });
-  }
+  } 
 }
   

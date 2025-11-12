@@ -13,7 +13,7 @@ class App {
     this.#navigationDrawer = navigationDrawer;
     this._setupDrawer();
     this._setupLogout();
-    this._requestPushNotificationPermission();
+    this._requestPushNotificationPermission(); // Meminta izin push notification
   }
 
   _setupDrawer() {
@@ -35,7 +35,6 @@ class App {
   }
 
   _setupLogout() {
-    // Delegation: cari link dengan [data-logout]
     document.addEventListener('click', (e) => {
       const target = e.target.closest('[data-logout]');
       if (target) {
@@ -48,7 +47,6 @@ class App {
   }
 
   _updateAuthLinks() {
-    // opsi: sembunyikan/ tampilkan link menu berdasarkan login
     const nav = this.#navigationDrawer;
     if (!nav) return;
 
@@ -58,7 +56,6 @@ class App {
   }
 
   async renderPage() {
-    // Guard halaman yang butuh login (stories & add membutuhkan token)
     const needAuthRoutes = ['/', '/add'];
     const url = getActiveRoute() || '/';
     if (needAuthRoutes.includes(url) && !isAuthenticated()) {
@@ -75,35 +72,71 @@ class App {
   // Meminta izin untuk Push Notification
   async _requestPushNotificationPermission() {
     if ('Notification' in window && 'serviceWorker' in navigator) {
-      // Meminta izin untuk menerima notifikasi
       const permission = await Notification.requestPermission();
-
       if (permission === 'granted') {
         console.log('Izin untuk menerima notifikasi diberikan.');
-        this._subscribeToPushNotifications();
+        this._subscribeToPushNotifications(); // Subscribe ke push notifications
       } else {
         console.log('Izin notifikasi ditolak.');
       }
     }
   }
 
-  // Mendaftar ke Push Notification
-  async _subscribeToPushNotifications() {
+  // Mendaftar ke Push Notification dan kirim subscription ke server
+async _subscribeToPushNotifications() {
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: 'BLAJ4T12fMTkNQtSVKfUExV1952sG7sX3Q3Lhg6-cpRLJS5TJpb8ONgNHz8o2G4Bp0JVJBW__SdvAZtgKNY498s', // Ganti dengan public VAPID key Anda
+    });
+
+    console.log('Berhasil subscribe ke push notification:', subscription);
+
+    // Kirim subscription ke server untuk menyimpan data subscription
+    this._sendSubscriptionToServer(subscription);
+  } catch (error) {
+    console.error('Gagal mendaftar ke push notification:', error);
+  }
+}
+
+
+  // Kirim data subscription ke server API
+  async _sendSubscriptionToServer(subscription) {
+    const token = localStorage.getItem('token'); // Ambil token dari localStorage
+
+    if (!token) {
+      console.log('Token tidak ditemukan!');
+      return;
+    }
+
+    const body = JSON.stringify({
+      endpoint: subscription.endpoint,
+      keys: {
+        p256dh: subscription.keys.p256dh,
+        auth: subscription.keys.auth,
+      },
+    });
+
     try {
-      const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: 'VAPID_PUBLIC_KEY', // Ganti dengan VAPID public key Anda
+      const response = await fetch('/notifications/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`, // Kirim token di header
+        },
+        body: body,
       });
 
-      console.log('Berhasil subscribe ke push notification:', subscription);
+      const result = await response.json();
 
-      // Kirim subscription ke server untuk menyimpan data subscription
-      // Bisa menggunakan fetch API atau library lain untuk menyimpan data subscription
-      // Contoh kirim subscription ke server:
-      // await fetch('/api/subscribe', { method: 'POST', body: JSON.stringify(subscription) });
+      if (result.error) {
+        console.error('Gagal mengirim subscription:', result.message);
+      } else {
+        console.log('Berhasil mengirim subscription ke server:', result);
+      }
     } catch (error) {
-      console.error('Gagal mendaftar ke push notification:', error);
+      console.error('Terjadi kesalahan saat mengirim subscription ke server:', error);
     }
   }
 }

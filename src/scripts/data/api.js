@@ -6,8 +6,10 @@ const ENDPOINTS = {
   REGISTER: `${CONFIG.BASE_URL}/register`,
   STORIES: `${CONFIG.BASE_URL}/stories`,
   STORY_DETAIL: (id) => `${CONFIG.BASE_URL}/stories/${id}`,
+  NOTIFICATIONS_SUBSCRIBE: `${CONFIG.BASE_URL}/notifications/subscribe`,  // URL endpoint untuk subscribe
 };
 
+// Fungsi untuk register user
 export async function registerUser({ name, email, password }) {
   const res = await fetch(ENDPOINTS.REGISTER, {
     method: "POST",
@@ -17,6 +19,7 @@ export async function registerUser({ name, email, password }) {
   return res.json();
 }
 
+// Fungsi untuk login user
 export async function loginUser({ email, password }) {
   const res = await fetch(ENDPOINTS.LOGIN, {
     method: "POST",
@@ -26,6 +29,7 @@ export async function loginUser({ email, password }) {
   return res.json();
 }
 
+// Fungsi untuk mendapatkan daftar stories
 export async function getStories({ page = 1, size = 10, location = 1 } = {}) {
   const token = getToken();
   const url = new URL(ENDPOINTS.STORIES);
@@ -39,6 +43,7 @@ export async function getStories({ page = 1, size = 10, location = 1 } = {}) {
   return res.json();
 }
 
+// Fungsi untuk menambahkan cerita baru
 export async function addStory({ description, imageFile, lat, lon }) {
   const token = getToken();
 
@@ -61,10 +66,56 @@ export async function addStory({ description, imageFile, lat, lon }) {
   return res.json();
 }
 
+// Fungsi untuk mendapatkan detail cerita
 export async function getStoryDetail(id) {
   const token = getToken();
   const res = await fetch(ENDPOINTS.STORY_DETAIL(id), {
     headers: { Authorization: `Bearer ${token}` },
   });
   return res.json();
+}
+
+// Fungsi untuk subscribe ke push notification
+export async function subscribePushNotification(subscription) {
+  const token = getToken();  // Dapatkan token dari localStorage
+
+  // Pastikan token ada
+  if (!token) {
+    throw new Error('Token tidak ditemukan');
+  }
+
+  const body = JSON.stringify({
+    endpoint: subscription.endpoint,
+    keys: {
+      p256dh: subscription.toJSON().keys.p256dh,
+      auth: subscription.toJSON().keys.auth,
+    },
+  });
+
+  try {
+    // Kirim data subscription ke API
+    const response = await fetch(ENDPOINTS.NOTIFICATIONS_SUBSCRIBE, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body,
+    });
+
+    const result = await response.json();
+
+    // Jika response sukses
+    if (result.error) {
+      console.error('Error during subscription:', result.message);
+      return;
+    }
+
+    console.log('Berhasil subscribe ke push notification:', result);
+    return result;
+
+  } catch (error) {
+    console.error('Gagal mengirim subscription ke server:', error);
+    throw error;
+  }
 }
