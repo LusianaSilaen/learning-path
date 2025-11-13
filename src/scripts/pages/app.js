@@ -138,7 +138,7 @@ class App {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
-      .register('/service-worker.js') // file ini biasanya dicopy dari src/public ke root dist/docs
+      .register('./service-worker.js') // file ini biasanya dicopy dari src/public ke root dist/docs
       .then((registration) => {
         console.log('Service Worker registered successfully', registration.scope);
       })

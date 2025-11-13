@@ -3,13 +3,13 @@ const CACHE_NAME = "berbagi-cerita-v1";
 // Daftar file yang akan di-cache (app shell)
 const urlsToCache = [
   "/", // root
-  "/index.html",
-  "/app.bundle.js",
-  "/main.css",
-  "/favicon.png",
-  "/manifest.json",
-  "/icons/icon-192x192.png",
-  "/icons/icon-512x512.png",
+  "./index.html",
+  "./app.bundle.js",
+  "./main.css",
+  "./favicon.png",
+  "./manifest.json",
+  "./icons/icon-192x192.png",
+  "./icons/icon-512x512.png",
 ];
 
 self.addEventListener("install", (event) => {

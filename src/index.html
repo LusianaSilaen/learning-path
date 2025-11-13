@@ -3,21 +3,31 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#ffffff">
-    <meta name="description" content="Berbagi Cerita - Platform berbagi cerita dengan teman-teman">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#ffffff" />
+    <meta
+      name="description"
+      content="Berbagi Cerita - Platform berbagi cerita dengan teman-teman"
+    />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
     <title>Berbagi Cerita</title>
 
     <!-- ✅ manifest SUDAH BENAR -->
-    <link rel="manifest" href="manifest.json" />
+    <link rel="manifest" href="./manifest.json" />
   </head>
   <body>
     <header>
       <div class="main-header container">
         <a class="brand-name" href="#/">Berbagi Cerita</a>
-        <nav id="navigation-drawer" class="navigation-drawer" aria-label="Navigasi utama">
+        <nav
+          id="navigation-drawer"
+          class="navigation-drawer"
+          aria-label="Navigasi utama"
+        >
           <ul class="nav-list">
             <li><a href="#/">Home</a></li>
             <li><a href="#/add" data-user>Tambah Cerita</a></li>
@@ -27,7 +37,13 @@
             <li><a href="#/" data-logout data-user>Logout</a></li>
           </ul>
         </nav>
-        <button id="drawer-button" class="drawer-button" aria-label="Buka navigasi">☰</button>
+        <button
+          id="drawer-button"
+          class="drawer-button"
+          aria-label="Buka navigasi"
+        >
+          ☰
+        </button>
       </div>
     </header>
 
@@ -35,7 +51,6 @@
 
     <!-- Sesuaikan dengan output webpack kamu, kalau biasanya di Dicoding: ./app.bundle.js -->
     <script src="app.bundle.js"></script>
-
 
     <!-- ❌ Hapus script register service worker di sini
          karena sudah ditangani di app.js -->
