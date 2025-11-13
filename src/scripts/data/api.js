@@ -77,35 +77,31 @@ export async function getStoryDetail(id) {
 
 // Fungsi untuk subscribe ke push notification
 export async function subscribePushNotification(subscription) {
-  const token = getToken();  // Dapatkan token dari localStorage
+  const token = getToken();
 
-  // Pastikan token ada
   if (!token) {
     throw new Error('Token tidak ditemukan');
   }
 
+  const { endpoint, keys } = subscription.toJSON();
+
   const body = JSON.stringify({
-    endpoint: subscription.endpoint,
-    keys: {
-      p256dh: subscription.toJSON().keys.p256dh,
-      auth: subscription.toJSON().keys.auth,
-    },
+    endpoint,
+    keys, // { p256dh, auth }
   });
 
   try {
-    // Kirim data subscription ke API
     const response = await fetch(ENDPOINTS.NOTIFICATIONS_SUBSCRIBE, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
       body,
     });
 
     const result = await response.json();
 
-    // Jika response sukses
     if (result.error) {
       console.error('Error during subscription:', result.message);
       return;
@@ -113,7 +109,6 @@ export async function subscribePushNotification(subscription) {
 
     console.log('Berhasil subscribe ke push notification:', result);
     return result;
-
   } catch (error) {
     console.error('Gagal mengirim subscription ke server:', error);
     throw error;

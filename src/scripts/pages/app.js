@@ -1,6 +1,26 @@
 import routes from '../routes/routes';
 import { getActiveRoute } from '../routes/url-parser';
 import { isAuthenticated, clearToken } from '../utils/auth';
+import { subscribePushNotification } from '../data/api'; // ⬅️ IMPORT fungsi API
+
+// Helper untuk konversi VAPID key (WAJIB untuk PushManager.subscribe)
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding)
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; i += 1) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+// ⬅️ pakai VAPID public key kamu di sini (punya kamu sendiri sudah oke)
+const VAPID_PUBLIC_KEY = 'BLAJ4T12fMTkNQtSVKfUExV1952sG7sX3Q3Lhg6-cpRLJS5TJpb8ONgNHz8o2G4Bp0JVJBW__SdvAZtgKNY498s';
 
 class App {
   #content = null;
@@ -51,8 +71,8 @@ class App {
     if (!nav) return;
 
     const isAuth = isAuthenticated();
-    nav.querySelectorAll('[data-guest]').forEach(el => el.style.display = isAuth ? 'none' : '');
-    nav.querySelectorAll('[data-user]').forEach(el => el.style.display = isAuth ? '' : 'none');
+    nav.querySelectorAll('[data-guest]').forEach((el) => { el.style.display = isAuth ? 'none' : ''; });
+    nav.querySelectorAll('[data-user]').forEach((el) => { el.style.display = isAuth ? '' : 'none'; });
   }
 
   async renderPage() {
@@ -71,81 +91,57 @@ class App {
 
   // Meminta izin untuk Push Notification
   async _requestPushNotificationPermission() {
-    if ('Notification' in window && 'serviceWorker' in navigator) {
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+      console.log('Browser tidak mendukung Notification atau Service Worker');
+      return;
+    }
+
+    try {
       const permission = await Notification.requestPermission();
       if (permission === 'granted') {
         console.log('Izin untuk menerima notifikasi diberikan.');
-        this._subscribeToPushNotifications(); // Subscribe ke push notifications
+        this._subscribeToPushNotifications();
       } else {
         console.log('Izin notifikasi ditolak.');
       }
+    } catch (error) {
+      console.error('Gagal meminta izin notifikasi:', error);
     }
   }
 
   // Mendaftar ke Push Notification dan kirim subscription ke server
-async _subscribeToPushNotifications() {
-  try {
-    const registration = await navigator.serviceWorker.ready;
-    const subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: 'BLAJ4T12fMTkNQtSVKfUExV1952sG7sX3Q3Lhg6-cpRLJS5TJpb8ONgNHz8o2G4Bp0JVJBW__SdvAZtgKNY498s', // Ganti dengan public VAPID key Anda
-    });
-
-    console.log('Berhasil subscribe ke push notification:', subscription);
-
-    // Kirim subscription ke server untuk menyimpan data subscription
-    this._sendSubscriptionToServer(subscription);
-  } catch (error) {
-    console.error('Gagal mendaftar ke push notification:', error);
-  }
-}
-
-
-  // Kirim data subscription ke server API
-  async _sendSubscriptionToServer(subscription) {
-    const token = localStorage.getItem('token'); // Ambil token dari localStorage
-
-    if (!token) {
-      console.log('Token tidak ditemukan!');
-      return;
-    }
-
-    const body = JSON.stringify({
-      endpoint: subscription.endpoint,
-      keys: {
-        p256dh: subscription.keys.p256dh,
-        auth: subscription.keys.auth,
-      },
-    });
-
+  async _subscribeToPushNotifications() {
     try {
-      const response = await fetch('/notifications/subscribe', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`, // Kirim token di header
-        },
-        body: body,
-      });
+      const registration = await navigator.serviceWorker.ready;
 
-      const result = await response.json();
-
-      if (result.error) {
-        console.error('Gagal mengirim subscription:', result.message);
-      } else {
-        console.log('Berhasil mengirim subscription ke server:', result);
+      // Cek dulu apakah sudah pernah subscribe
+      let subscription = await registration.pushManager.getSubscription();
+      if (!subscription) {
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        });
       }
+
+      console.log('Berhasil subscribe ke push notification:', subscription);
+
+      // Kirim subscription ke server lewat API yang sudah kamu buat
+      await subscribePushNotification(subscription);
+      console.log('Subscription berhasil dikirim ke server');
     } catch (error) {
-      console.error('Terjadi kesalahan saat mengirim subscription ke server:', error);
+      console.error('Gagal mendaftar ke push notification:', error);
     }
   }
 }
 
+// ✅ Registrasi service worker (pastikan path-nya sama dengan hasil build)
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
-      .register('/service-worker.js')  // pastikan file ini terdaftar dengan benar
-      .then(() => console.log('Service Worker registered successfully'))
+      .register('/service-worker.js') // file ini biasanya dicopy dari src/public ke root dist/docs
+      .then((registration) => {
+        console.log('Service Worker registered successfully', registration.scope);
+      })
       .catch((error) => console.log('Service Worker registration failed:', error));
   });
 }

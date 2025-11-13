@@ -1,3 +1,4 @@
+import { saveStory } from '../../utils/indexedDB';
 import { getStories } from '../../data/api';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -74,10 +75,24 @@ export default class HomePage {
               <h2>${title}</h2>
               <p>${story.description || ''}</p>
               <small>${new Date(story.createdAt).toLocaleString()}</small>
+              <button class="save-btn" data-id="${story.id}">Simpan</button>
             </article>
           `;
         })
         .join('');
+
+      // Tambahkan event listener untuk tombol Simpan
+      document.querySelectorAll('.save-btn').forEach(button => {
+        button.addEventListener('click', (e) => {
+          const storyId = e.target.dataset.id;
+          const storyToSave = stories.find(story => story.id === storyId);
+          saveStory(storyToSave); // Menyimpan cerita ke IndexedDB
+          alert('Cerita berhasil disimpan!');
+
+          // Redirect ke halaman saved-page setelah menyimpan cerita
+          window.location.hash = '#/saved';  // Navigasi ke halaman saved
+        });
+      });
 
       console.log(`✅ ${stories.length} cerita berhasil dimuat.`);
     } catch (error) {

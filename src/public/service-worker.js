@@ -1,66 +1,55 @@
-// Service Worker untuk caching dan push notification
-self.addEventListener('install', (event) => {
-  console.log('Service Worker installing...');
+const CACHE_NAME = "berbagi-cerita-v1";
+
+// Daftar file yang akan di-cache (app shell)
+const urlsToCache = [
+  "/", // root
+  "/index.html",
+  "/app.bundle.js",
+  "/main.css",
+  "/favicon.png",
+  "/manifest.json",
+  "/icons/icon-192x192.png",
+  "/icons/icon-512x512.png",
+];
+
+self.addEventListener("install", (event) => {
+  console.log("Service Worker installing...");
   event.waitUntil(
-    caches.open('v1').then((cache) => {
-      return cache.addAll([
-        '/',
-        '/index.html',
-        '/app.bundle.js',
-        '/styles/styles.css',
-        '/images/logo.png', // tambahkan gambar yang perlu di-cache
-        // ... tambah file lainnya yang dibutuhkan
-      ]);
-    })
+    caches
+      .open(CACHE_NAME)
+      .then((cache) => {
+        return cache.addAll(urlsToCache);
+      })
+      .catch((error) => {
+        console.error("Gagal cache saat install SW:", error);
+      })
   );
 });
 
-// Menangani aktifasi service worker, membersihkan cache lama
-self.addEventListener('activate', (event) => {
-  const cacheWhitelist = ['v1'];
+self.addEventListener("activate", (event) => {
+  console.log("Service Worker activating...");
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
+    caches.keys().then((cacheNames) =>
+      Promise.all(
         cacheNames.map((cacheName) => {
-          if (!cacheWhitelist.includes(cacheName)) {
+          if (cacheName !== CACHE_NAME) {
+            console.log("Menghapus cache lama:", cacheName);
             return caches.delete(cacheName);
           }
+          return null;
         })
-      );
-    })
+      )
+    )
   );
 });
 
-// Fetch event untuk mengambil file dari cache saat offline
-self.addEventListener('fetch', (event) => {
+self.addEventListener("fetch", (event) => {
   event.respondWith(
     caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
+      // Kalau ada di cache → pakai cache
+      if (response) return response;
+      // Kalau tidak ada → fetch ke jaringan
+      return fetch(event.request);
     })
-  );
-});
-
-// Push Notification
-self.addEventListener('push', function (event) {
-  const data = event.data.json();
-  const options = {
-    body: data.body,
-    icon: data.icon || '/images/notification-icon.png',
-    badge: '/images/notification-badge.png',
-    data: {
-      url: data.url || '/'
-    },
-  };
-
-  event.waitUntil(
-    self.registration.showNotification(data.title, options)
-  );
-});
-
-// Notification Click Event
-self.addEventListener('notificationclick', function (event) {
-  event.notification.close();
-  event.waitUntil(
-    clients.openWindow(event.notification.data.url)
   );
 });

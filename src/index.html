@@ -9,6 +9,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Berbagi Cerita</title>
+
+    <!-- ✅ manifest SUDAH BENAR -->
     <link rel="manifest" href="manifest.json" />
   </head>
   <body>
@@ -31,15 +33,11 @@
 
     <main id="main-content" class="main-content"></main>
 
-   <script src="/dist/app.bundle.js"></script>
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/src/public/service-worker.js')
-            .then(registration => console.log('Service Worker registered with scope:', registration.scope))
-            .catch(error => console.log('Service Worker registration failed:', error));
-        });
-      }
-    </script>
+    <!-- Sesuaikan dengan output webpack kamu, kalau biasanya di Dicoding: ./app.bundle.js -->
+    <script src="app.bundle.js"></script>
+
+
+    <!-- ❌ Hapus script register service worker di sini
+         karena sudah ditangani di app.js -->
   </body>
 </html>

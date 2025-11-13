@@ -1,4 +1,5 @@
 import { addStory } from '../../data/api';
+import { saveStory } from '../../utils/indexedDB'; // Import IndexedDB functions
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -94,6 +95,7 @@ export default class AddPage {
           <div class="form-footer">
             <div id="formStatus" class="sr-only" aria-live="polite"></div>
             <button id="submitBtn" type="submit" class="btn primary">Kirim Cerita</button>
+            <button id="saveBtn" type="button" class="btn secondary">Simpan ke Offline</button>
           </div>
         </form>
       </section>
@@ -157,31 +159,6 @@ export default class AddPage {
     pickBtn.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
 
-    ['dragenter', 'dragover'].forEach((evt) =>
-      dropzone.addEventListener(evt, (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        dropzone.classList.add('dragover');
-      }),
-    );
-
-    ['dragleave', 'drop'].forEach((evt) =>
-      dropzone.addEventListener(evt, (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        dropzone.classList.remove('dragover');
-      }),
-    );
-
-    dropzone.addEventListener('drop', (e) => {
-      if (e.dataTransfer?.files?.length) handleFiles(e.dataTransfer.files);
-    });
-
-    dropzone.addEventListener('click', () => fileInput.click());
-    dropzone.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') fileInput.click();
-    });
-
     // --- KAMERA (getUserMedia) ---
     const openBtn = document.querySelector('#openCameraBtn');
     const captureBtn = document.querySelector('#captureBtn');
@@ -222,7 +199,6 @@ export default class AddPage {
     });
 
     closeBtn.addEventListener('click', () => this.#stopCamera(video, captureBtn, closeBtn));
-    window.addEventListener('hashchange', () => this.#stopCamera(video, captureBtn, closeBtn), { once: true });
 
     // --- VALIDASI ---
     const descEl = document.querySelector('#description');
@@ -311,6 +287,22 @@ export default class AddPage {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Kirim Cerita';
       }
+    });
+
+    // --- SIMPAN KE OFFLINE (IndexedDB) ---
+    document.querySelector('#saveBtn').addEventListener('click', async () => {
+      const storyData = {
+        title: document.querySelector('#title').value.trim(),
+        description: descEl.value.trim(),
+        lat: parseFloat(latEl.value),
+        lon: parseFloat(lonEl.value),
+        photoUrl: document.querySelector('#imagePreview').src || '', // Jika ada gambar, simpan URL-nya
+        createdAt: new Date().toISOString(),
+      };
+
+      // Simpan cerita ke IndexedDB
+      await saveStory(storyData);
+      alert('Cerita berhasil disimpan secara offline!');
     });
   }
 
