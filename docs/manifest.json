@@ -1,0 +1,22 @@
+{
+  "name": "Aplikasi Cerita",
+  "short_name": "Cerita",
+  "description": "Aplikasi untuk berbagi cerita dengan peta interaktif.",
+  "start_url": "/learning-path/",
+  "scope": "/learning-path/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4fc3f7",
+  "icons": [
+    {
+      "src": "icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
